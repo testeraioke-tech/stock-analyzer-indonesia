@@ -5,8 +5,15 @@ from alpha_vantage.fundamentaldata import FundamentalData
 from alpha_vantage.techindicators import TechIndicators
 import yfinance as yf
 from datetime import datetime, timedelta
-from config import ALPHA_VANTAGE_API_KEY, IDX_SUFFIX, IDX_STOCKS
 import time
+
+# Import config
+try:
+    from config import ALPHA_VANTAGE_API_KEY, IDX_SUFFIX, IDX_STOCKS
+except ImportError:
+    ALPHA_VANTAGE_API_KEY = 'demo'
+    IDX_SUFFIX = '.JK'
+    IDX_STOCKS = {}
 
 class StockDataFetcher:
     def __init__(self):
@@ -266,7 +273,6 @@ class StockDataFetcher:
         results = []
         query_upper = query.upper()
 
-        from config import IDX_STOCKS
         for symbol, name in IDX_STOCKS.items():
             if query_upper in symbol or query_upper in name.upper():
                 results.append({'symbol': symbol, 'name': name})
