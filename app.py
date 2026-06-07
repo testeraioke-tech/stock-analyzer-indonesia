@@ -20,9 +20,8 @@ st.set_page_config(
 # --- PASSWORD PROTECTION ---
 def check_password():
     def password_entered():
-        if st.session_state["password"] == st.secrets.get("password", "Masuk1234_"):
+        if st.session_state.get("password_input") == st.secrets.get("password", "Masuk1234_"):
             st.session_state["authenticated"] = True
-            del st.session_state["password"]
         else:
             st.session_state["authenticated"] = False
 
@@ -57,13 +56,13 @@ def check_password():
         st.markdown("<br>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1,2,1])
         with col2:
-            st.text_input("🔑 Password", type="password", on_change=password_entered, key="password", label_visibility="visible")
+            st.text_input("🔑 Password", type="password", on_change=password_entered, key="password_input")
         return False
     elif not st.session_state["authenticated"]:
         st.error("❌ Password salah!")
         col1, col2, col3 = st.columns([1,2,1])
         with col2:
-            st.text_input("🔑 Password", type="password", on_change=password_entered, key="password")
+            st.text_input("🔑 Password", type="password", on_change=password_entered, key="password_input")
         return False
     else:
         return True
