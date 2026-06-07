@@ -17,6 +17,34 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- PASSWORD PROTECTION ---
+def check_password():
+    def password_entered():
+        if st.session_state["password"] == st.secrets.get("password", "Masuk1234_"):
+            st.session_state["authenticated"] = True
+            del st.session_state["password"]
+        else:
+            st.session_state["authenticated"] = False
+
+    if "authenticated" not in st.session_state:
+        st.markdown("""
+        <div style="text-align:center; padding: 2rem;">
+            <h1>🔒 Stock Analyzer Indonesia</h1>
+            <p>Masukkan password untuk mengakses tools</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        return False
+    elif not st.session_state["authenticated"]:
+        st.error("Password salah! Silakan coba lagi.")
+        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        return False
+    else:
+        return True
+
+if not check_password():
+    st.stop()
+
 st.markdown("""
 <style>
     .main-header {
