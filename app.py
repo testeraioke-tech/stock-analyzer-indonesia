@@ -313,6 +313,25 @@ header {visibility: hidden;}
 st.markdown('<div class="main-header">🚀 StockVerse</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">Analisa Saham Indonesia - Real-time, Technical, Fundamental & Scalping</div>', unsafe_allow_html=True)
 
+# --- STOCK SELECTOR (MAIN AREA) ---
+stock_list = list(IDX_STOCKS.keys())
+col_search, col_select = st.columns([1, 2])
+
+with col_search:
+    search_query = st.text_input("🔍 Cari Saham", placeholder="Ketik nama/simbol...", key="main_search")
+
+with col_select:
+    if search_query:
+        filtered = [s for s in stock_list if search_query.upper() in s or search_query.upper() in IDX_STOCKS[s].upper()]
+        if filtered:
+            selected_stock = st.selectbox("📋 Pilih Saham", filtered, format_func=lambda x: f"{x} - {IDX_STOCKS[x]}", key="main_stock_select")
+        else:
+            selected_stock = st.selectbox("📋 Pilih Saham", stock_list, format_func=lambda x: f"{x} - {IDX_STOCKS[x]}", key="main_stock_select")
+    else:
+        selected_stock = st.selectbox("📋 Pilih Saham", stock_list, format_func=lambda x: f"{x} - {IDX_STOCKS[x]}", key="main_stock_select")
+
+st.markdown("---")
+
 # --- RESOURCES ---
 @st.cache_resource
 def get_fetcher():
@@ -330,7 +349,7 @@ fetcher = get_fetcher()
 news_fetcher = get_news_fetcher()
 geo_analyzer = get_geopolitical_analyzer()
 
-# --- SIDEBAR ---
+# --- SIDEBAR (INFO SAJA) ---
 with st.sidebar:
     st.markdown("""
     <div style="text-align: center; padding: 1rem;">
@@ -340,22 +359,10 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     st.markdown("---")
-    
-    search_query = st.text_input("🔍 Cari Saham", placeholder="Ketik nama/simbol...")
-    stock_list = list(IDX_STOCKS.keys())
-    
-    if search_query:
-        filtered = [s for s in stock_list if search_query.upper() in s or search_query.upper() in IDX_STOCKS[s].upper()]
-        if filtered:
-            selected_stock = st.selectbox("📋 Pilih Saham", filtered, format_func=lambda x: f"{x} - {IDX_STOCKS[x]}")
-        else:
-            selected_stock = st.selectbox("📋 Pilih Saham", stock_list, format_func=lambda x: f"{x} - {IDX_STOCKS[x]}")
-    else:
-        selected_stock = st.selectbox("📋 Pilih Saham", stock_list, format_func=lambda x: f"{x} - {IDX_STOCKS[x]}")
-    
+    st.info("📋 Pilih saham di bagian atas halaman utama")
     st.markdown("---")
     st.markdown("""
-    <div style="text-align: center; color: #666; font-size: 0.8rem;">
+    <div style="text-align: center; color: #888; font-size: 0.8rem;">
         Made with ❤️ for Indonesian Investors
     </div>
     """, unsafe_allow_html=True)
