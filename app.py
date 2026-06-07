@@ -400,7 +400,7 @@ with tab1:
             if not df.empty:
                 analyzer = TechnicalAnalyzer(df)
                 fig = analyzer.create_candlestick_chart(last_n_days=60)
-                st.plotly_chart(fig, use_container_width=True, key="chart_beranda")
+                st.plotly_chart(fig, width='stretch', key="chart_beranda")
             else:
                 st.warning("⚠️ Data chart tidak tersedia")
         else:
@@ -439,7 +439,7 @@ with tab2:
             
             with col1:
                 fig = analyzer.create_candlestick_chart(last_n_days=90)
-                st.plotly_chart(fig, use_container_width=True, key="chart_teknikal")
+                st.plotly_chart(fig, width='stretch', key="chart_teknikal")
             
             with col2:
                 st.markdown('<div class="section-header">🎯 Indikator</div>', unsafe_allow_html=True)
@@ -555,7 +555,7 @@ with tab3:
                             margin=dict(l=0, r=0, t=30, b=0),
                             yaxis_range=[0, 100]
                         )
-                        st.plotly_chart(fig, use_container_width=True, key="chart_fundamental_scores")
+                        st.plotly_chart(fig, width='stretch', key="chart_fundamental_scores")
 
 # --- TAB 4: BERITA ---
 with tab4:
@@ -696,7 +696,7 @@ with tab6:
                 
                 fig = scalping_analyzer.create_scalping_chart(last_n_bars=100)
                 if fig:
-                    st.plotly_chart(fig, use_container_width=True, key="chart_scalping")
+                    st.plotly_chart(fig, width='stretch', key="chart_scalping")
                 
                 zones = scalping_analyzer.get_scalping_zones()
                 if zones:
@@ -771,7 +771,7 @@ with tab7:
         
         with col1:
             fig = tech_analyzer.create_candlestick_chart(last_n_days=60)
-            st.plotly_chart(fig, use_container_width=True, key="chart_full")
+            st.plotly_chart(fig, width='stretch', key="chart_full")
         
         with col2:
             trend = tech_summary['trend']

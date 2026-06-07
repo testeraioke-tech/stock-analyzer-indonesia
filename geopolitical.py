@@ -14,7 +14,7 @@ class GeopoliticalAnalyzer:
             'Silver': 'SI=F',
             'Copper': 'HG=F',
             'Aluminum': 'ALI=F',
-            'Nickel': 'NI=F',
+            'Nickel': 'NIDY.L',
             'Natural Gas': 'NG=F',
         }
 
@@ -257,7 +257,7 @@ class GeopoliticalAnalyzer:
             pass
 
         try:
-            nickel = yf.Ticker('NI=F')
+            nickel = yf.Ticker('NIDY.L')
             hist = nickel.history(period='1mo')
             if not hist.empty:
                 current = hist['Close'].iloc[-1]
