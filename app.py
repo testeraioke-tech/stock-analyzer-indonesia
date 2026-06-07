@@ -76,10 +76,6 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-* {
-    font-family: 'Inter', sans-serif;
-}
-
 /* Main Background */
 .stApp {
     background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
@@ -94,7 +90,27 @@ section[data-testid="stSidebar"] {
 section[data-testid="stSidebar"] .stMarkdown p,
 section[data-testid="stSidebar"] .stMarkdown h1,
 section[data-testid="stSidebar"] .stMarkdown h2,
-section[data-testid="stSidebar"] .stMarkdown h3 {
+section[data-testid="stSidebar"] .stMarkdown h3,
+section[data-testid="stSidebar"] label {
+    color: #ffffff !important;
+}
+
+/* Sidebar Selectbox */
+section[data-testid="stSidebar"] [data-baseweb="select"] {
+    background-color: rgba(255,255,255,0.1) !important;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+
+section[data-testid="stSidebar"] [data-baseweb="select"] span {
+    color: #ffffff !important;
+}
+
+section[data-testid="stSidebar"] [data-baseweb="input"] {
+    background-color: rgba(255,255,255,0.1) !important;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+
+section[data-testid="stSidebar"] [data-baseweb="input"] input {
     color: #ffffff !important;
 }
 
