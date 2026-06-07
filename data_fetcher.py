@@ -80,12 +80,12 @@ class StockDataFetcher:
             for attempt in range(3):
                 try:
                     info = stock.info
-                    if info and 'regularMarketPrice' in info:
+                    if info and isinstance(info, dict) and 'regularMarketPrice' in info:
                         break
                 except:
                     time.sleep(1)
             
-            if not info or 'regularMarketPrice' not in info:
+            if not info or not isinstance(info, dict) or 'regularMarketPrice' not in info:
                 # Fallback: try to get price from history
                 try:
                     hist = stock.history(period='1d')
@@ -165,12 +165,12 @@ class StockDataFetcher:
             for attempt in range(3):
                 try:
                     info = stock.info
-                    if info and 'sector' in info:
+                    if info and isinstance(info, dict) and 'sector' in info:
                         break
                 except:
                     time.sleep(1)
             
-            if not info or 'sector' not in info:
+            if not info or not isinstance(info, dict) or 'sector' not in info:
                 return {
                     'symbol': symbol,
                     'name': IDX_STOCKS.get(symbol, symbol),
@@ -239,12 +239,12 @@ class StockDataFetcher:
             for attempt in range(3):
                 try:
                     info = stock.info
-                    if info and 'trailingPE' in info:
+                    if info and isinstance(info, dict) and 'trailingPE' in info:
                         break
                 except:
                     time.sleep(1)
             
-            if not info or 'trailingPE' not in info:
+            if not info or not isinstance(info, dict) or 'trailingPE' not in info:
                 return {
                     'Market Cap': 'N/A',
                     'Trailing PE': 'N/A',
