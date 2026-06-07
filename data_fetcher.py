@@ -29,38 +29,98 @@ class StockDataFetcher:
         if cache_key in self.cache:
             return self.cache[cache_key]
 
+        ticker = f"{symbol}{IDX_SUFFIX}"
+        stock = yf.Ticker(ticker)
+
+        period_map = {
+            '1d': '1d', '5d': '5d', '1mo': '1mo',
+            '3mo': '3mo', '6mo': '6mo', '1y': '1y',
+            '2y': '2y', '5y': '5y', '10y': '10y', 'max': 'max'
+        }
+
+        # Try multiple attempts
+        for attempt in range(3):
+            try:
+                df = stock.history(period=period_map.get(period, '1y'))
+
+                if not df.empty:
+                    df.columns = [col.lower().replace(' ', '_') for col in df.columns]
+                    self.cache[cache_key] = df
+                    return df
+            except Exception as e:
+                print(f"Attempt {attempt+1} failed for {symbol}: {e}")
+                time.sleep(1)
+
+        # Fallback: try shorter period
         try:
-            ticker = f"{symbol}{IDX_SUFFIX}"
-            stock = yf.Ticker(ticker)
+            df = stock.history(period='1mo')
+            if not df.empty:
+                df.columns = [col.lower().replace(' ', '_') for col in df.columns]
+                self.cache[cache_key] = df
+                return df
+        except:
+            pass
 
-            period_map = {
-                '1d': '1d', '5d': '5d', '1mo': '1mo',
-                '3mo': '3mo', '6mo': '6mo', '1y': '1y',
-                '2y': '2y', '5y': '5y', '10y': '10y', 'max': 'max'
-            }
-
-            df = stock.history(period=period_map.get(period, '1y'))
-
-            if df.empty:
-                raise ValueError(f"Tidak ada data untuk {symbol}")
-
-            df.columns = [col.lower().replace(' ', '_') for col in df.columns]
-            self.cache[cache_key] = df
-            return df
-
-        except Exception as e:
-            print(f"Error fetching {symbol}: {e}")
-            return pd.DataFrame()
+        return pd.DataFrame()
 
     def get_realtime_quote(self, symbol):
         try:
             ticker = f"{symbol}{IDX_SUFFIX}"
             stock = yf.Ticker(ticker)
-            info = stock.info
-
+            
+            # Try to get info with retry
+            info = None
+            for attempt in range(3):
+                try:
+                    info = stock.info
+                    if info and 'regularMarketPrice' in info:
+                        break
+                except:
+                    time.sleep(1)
+            
+            if not info or 'regularMarketPrice' not in info:
+                # Fallback: try to get price from history
+                try:
+                    hist = stock.history(period='1d')
+                    if not hist.empty:
+                        last_price = hist['Close'].iloc[-1]
+                        prev_price = hist['Close'].iloc[-2] if len(hist) > 1 else last_price
+                        return {
+                            'symbol': symbol,
+                            'name': IDX_STOCKS.get(symbol, symbol),
+                            'price': float(last_price),
+                            'change': float(last_price - prev_price),
+                            'change_percent': float((last_price - prev_price) / prev_price * 100) if prev_price else 0,
+                            'volume': int(hist['Volume'].iloc[-1]) if 'Volume' in hist else 0,
+                            'market_cap': 0,
+                            'pe_ratio': None,
+                            'pb_ratio': None,
+                            'dividend_yield': None,
+                            'high_52w': float(hist['High'].max()),
+                            'low_52w': float(hist['Low'].min()),
+                        }
+                except:
+                    pass
+                
+                # Last resort: return minimal data
+                return {
+                    'symbol': symbol,
+                    'name': IDX_STOCKS.get(symbol, symbol),
+                    'price': 0,
+                    'change': 0,
+                    'change_percent': 0,
+                    'volume': 0,
+                    'market_cap': 0,
+                    'pe_ratio': None,
+                    'pb_ratio': None,
+                    'dividend_yield': None,
+                    'high_52w': None,
+                    'low_52w': None,
+                }
+            
             return {
                 'symbol': symbol,
-                'name': info.get('longName', symbol),
+                'name': info.get('longName', IDX_STOCKS.get(symbol, symbol)),
                 'price': info.get('currentPrice', info.get('regularMarketPrice', 0)),
                 'change': info.get('regularMarketChange', 0),
                 'change_percent': info.get('regularMarketChangePercent', 0),
@@ -74,7 +134,20 @@ class StockDataFetcher:
             }
         except Exception as e:
             print(f"Error getting quote for {symbol}: {e}")
-            return None
+            return {
+                'symbol': symbol,
+                'name': IDX_STOCKS.get(symbol, symbol),
+                'price': 0,
+                'change': 0,
+                'change_percent': 0,
+                'volume': 0,
+                'market_cap': 0,
+                'pe_ratio': None,
+                'pb_ratio': None,
+                'dividend_yield': None,
+                'high_52w': None,
+                'low_52w': None,
+            }
 
     def get_company_info(self, symbol):
         try:
