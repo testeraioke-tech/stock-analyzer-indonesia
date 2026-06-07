@@ -5,7 +5,7 @@ from alpha_vantage.fundamentaldata import FundamentalData
 from alpha_vantage.techindicators import TechIndicators
 import yfinance as yf
 from datetime import datetime, timedelta
-from config import ALPHA_VANTAGE_API_KEY, IDX_SUFFIX
+from config import ALPHA_VANTAGE_API_KEY, IDX_SUFFIX, IDX_STOCKS
 import time
 
 class StockDataFetcher:
