@@ -160,11 +160,32 @@ class StockDataFetcher:
         try:
             ticker = f"{symbol}{IDX_SUFFIX}"
             stock = yf.Ticker(ticker)
-            info = stock.info
-
+            
+            info = None
+            for attempt in range(3):
+                try:
+                    info = stock.info
+                    if info and 'sector' in info:
+                        break
+                except:
+                    time.sleep(1)
+            
+            if not info or 'sector' not in info:
+                return {
+                    'symbol': symbol,
+                    'name': IDX_STOCKS.get(symbol, symbol),
+                    'sector': 'N/A',
+                    'industry': 'N/A',
+                    'description': 'Data tidak tersedia',
+                    'website': 'N/A',
+                    'employees': 'N/A',
+                    'country': 'Indonesia',
+                    'ceo': 'N/A',
+                }
+            
             return {
                 'symbol': symbol,
-                'name': info.get('longName', symbol),
+                'name': info.get('longName', IDX_STOCKS.get(symbol, symbol)),
                 'sector': info.get('sector', 'N/A'),
                 'industry': info.get('industry', 'N/A'),
                 'description': info.get('longBusinessSummary', 'N/A'),
@@ -175,7 +196,17 @@ class StockDataFetcher:
             }
         except Exception as e:
             print(f"Error getting company info for {symbol}: {e}")
-            return None
+            return {
+                'symbol': symbol,
+                'name': IDX_STOCKS.get(symbol, symbol),
+                'sector': 'N/A',
+                'industry': 'N/A',
+                'description': 'Data tidak tersedia',
+                'website': 'N/A',
+                'employees': 'N/A',
+                'country': 'Indonesia',
+                'ceo': 'N/A',
+            }
 
     def get_financial_statements(self, symbol):
         try:
@@ -187,53 +218,59 @@ class StockDataFetcher:
             cashflow = stock.cashflow
 
             return {
-                'income_statement': income,
-                'balance_sheet': balance,
-                'cash_flow': cashflow
+                'income_statement': income if income is not None and not income.empty else pd.DataFrame(),
+                'balance_sheet': balance if balance is not None and not balance.empty else pd.DataFrame(),
+                'cash_flow': cashflow if cashflow is not None and not cashflow.empty else pd.DataFrame()
             }
         except Exception as e:
             print(f"Error getting financials for {symbol}: {e}")
-            return None
+            return {
+                'income_statement': pd.DataFrame(),
+                'balance_sheet': pd.DataFrame(),
+                'cash_flow': pd.DataFrame()
+            }
 
     def get_key_metrics(self, symbol):
         try:
             ticker = f"{symbol}{IDX_SUFFIX}"
             stock = yf.Ticker(ticker)
-            info = stock.info
+            
+            info = None
+            for attempt in range(3):
+                try:
+                    info = stock.info
+                    if info and 'trailingPE' in info:
+                        break
+                except:
+                    time.sleep(1)
+            
+            if not info or 'trailingPE' not in info:
+                return {
+                    'Market Cap': 'N/A',
+                    'Trailing PE': 'N/A',
+                    'Price to Book': 'N/A',
+                    'Dividend Yield': 'N/A',
+                    'ROE': 'N/A',
+                    'ROA': 'N/A',
+                    'Revenue': 'N/A',
+                    'Profit Margin': 'N/A',
+                    'Debt to Equity': 'N/A',
+                    'Current Ratio': 'N/A',
+                    'Beta': 'N/A',
+                }
 
             metrics = {
                 'Market Cap': info.get('marketCap', 'N/A'),
-                'Enterprise Value': info.get('enterpriseValue', 'N/A'),
                 'Trailing PE': info.get('trailingPE', 'N/A'),
-                'Forward PE': info.get('forwardPE', 'N/A'),
-                'PEG Ratio': info.get('pegRatio', 'N/A'),
-                'Price to Sales': info.get('priceToSalesTrailing12Months', 'N/A'),
                 'Price to Book': info.get('priceToBook', 'N/A'),
-                'EV to Revenue': info.get('enterpriseToRevenue', 'N/A'),
-                'EV to EBITDA': info.get('enterpriseToEbitda', 'N/A'),
                 'Dividend Yield': info.get('dividendYield', 'N/A'),
-                'Dividend Rate': info.get('dividendRate', 'N/A'),
-                'Payout Ratio': info.get('payoutRatio', 'N/A'),
                 'ROE': info.get('returnOnEquity', 'N/A'),
                 'ROA': info.get('returnOnAssets', 'N/A'),
                 'Revenue': info.get('totalRevenue', 'N/A'),
-                'Revenue Growth': info.get('revenueGrowth', 'N/A'),
-                'Gross Margin': info.get('grossMargins', 'N/A'),
-                'EBITDA Margin': info.get('ebitdaMargins', 'N/A'),
-                'Operating Margin': info.get('operatingMargins', 'N/A'),
                 'Profit Margin': info.get('profitMargins', 'N/A'),
                 'Debt to Equity': info.get('debtToEquity', 'N/A'),
                 'Current Ratio': info.get('currentRatio', 'N/A'),
-                'Quick Ratio': info.get('quickRatio', 'N/A'),
-                'Book Value': info.get('bookValue', 'N/A'),
-                'Price to Cash Flow': info.get('priceToCashFlow', 'N/A'),
-                'Free Cash Flow': info.get('freeCashflow', 'N/A'),
-                'Operating Cash Flow': info.get('operatingCashflow', 'N/A'),
                 'Beta': info.get('beta', 'N/A'),
-                '52 Week High': info.get('fiftyTwoWeekHigh', 'N/A'),
-                '52 Week Low': info.get('fiftyTwoWeekLow', 'N/A'),
-                '50 Day MA': info.get('fiftyDayAverage', 'N/A'),
-                '200 Day MA': info.get('twoHundredDayAverage', 'N/A'),
             }
 
             for key, value in metrics.items():
@@ -258,7 +295,19 @@ class StockDataFetcher:
 
         except Exception as e:
             print(f"Error getting metrics for {symbol}: {e}")
-            return None
+            return {
+                'Market Cap': 'N/A',
+                'Trailing PE': 'N/A',
+                'Price to Book': 'N/A',
+                'Dividend Yield': 'N/A',
+                'ROE': 'N/A',
+                'ROA': 'N/A',
+                'Revenue': 'N/A',
+                'Profit Margin': 'N/A',
+                'Debt to Equity': 'N/A',
+                'Current Ratio': 'N/A',
+                'Beta': 'N/A',
+            }
 
     def get_multiple_stocks(self, symbols, period='6mo'):
         all_data = {}

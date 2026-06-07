@@ -381,32 +381,33 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
 with tab1:
     st.markdown(f'<div class="section-header">📊 {IDX_STOCKS.get(selected_stock, selected_stock)} ({selected_stock})</div>', unsafe_allow_html=True)
     
-    try:
-        with st.spinner(f"Memuat data {selected_stock}..."):
-            quote = fetcher.get_realtime_quote(selected_stock)
-            df = fetcher.get_stock_data(selected_stock, '6mo')
+    with st.spinner(f"Memuat data {selected_stock}..."):
+        quote = fetcher.get_realtime_quote(selected_stock)
+        df = fetcher.get_stock_data(selected_stock, '6mo')
+    
+    if quote and quote.get('price', 0) > 0:
+        col_a, col_b, col_c, col_d = st.columns(4)
+        with col_a:
+            st.metric("💰 Harga", f"Rp {quote['price']:,.0f}", f"{quote['change']:+,.0f} ({quote['change_percent']:+.2f}%)")
+        with col_b:
+            st.metric("📦 Volume", f"{quote['volume']:,}")
+        with col_c:
+            mc = quote.get('market_cap', 0) or 0
+            st.metric("🏦 Market Cap", f"Rp {mc/1e9:,.0f}B" if mc > 0 else "N/A")
+        with col_d:
+            pe = quote.get('pe_ratio')
+            st.metric("📊 PE Ratio", f"{pe:.1f}" if pe else "N/A")
         
-        if quote:
-            col_a, col_b, col_c, col_d = st.columns(4)
-            with col_a:
-                st.metric("💰 Harga", f"Rp {quote['price']:,.0f}", f"{quote['change']:+,.0f} ({quote['change_percent']:+.2f}%)")
-            with col_b:
-                st.metric("📦 Volume", f"{quote['volume']:,}")
-            with col_c:
-                st.metric("🏦 Market Cap", f"Rp {quote['market_cap']/1e9:,.0f}B" if quote['market_cap'] else "N/A")
-            with col_d:
-                st.metric("📊 PE Ratio", f"{quote['pe_ratio']:.1f}" if quote['pe_ratio'] else "N/A")
-            
-            if not df.empty:
-                analyzer = TechnicalAnalyzer(df)
-                fig = analyzer.create_candlestick_chart(last_n_days=60)
-                st.plotly_chart(fig, width='stretch', key="chart_beranda")
-            else:
-                st.warning("⚠️ Data chart tidak tersedia")
+        if not df.empty:
+            analyzer = TechnicalAnalyzer(df)
+            fig = analyzer.create_candlestick_chart(last_n_days=60)
+            st.plotly_chart(fig, width='stretch', key="chart_beranda")
         else:
-            st.error(f"❌ Tidak dapat mengambil data untuk {selected_stock}")
-    except Exception as e:
-        st.error(f"❌ Error: {str(e)}")
+            st.warning("⚠️ Data chart tidak tersedia")
+    elif quote:
+        st.info(f"📊 {selected_stock} - Data harga tidak tersedia (pasar mungkin tutup)")
+    else:
+        st.error(f"❌ Tidak dapat mengambil data untuk {selected_stock}")
 
 # --- TAB 2: TEKNIKAL ---
 with tab2:

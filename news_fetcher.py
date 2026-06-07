@@ -66,8 +66,35 @@ class NewsFetcher:
         all_news = []
 
         for source in ['yahoo_finance', 'google_news']:
-            news = self.fetch_rss_news(source, symbol, max_items=max_items // 2)
-            all_news.extend(news)
+            try:
+                news = self.fetch_rss_news(source, symbol, max_items=max_items // 2)
+                all_news.extend(news)
+            except Exception as e:
+                print(f"Error fetching from {source}: {e}")
+
+        # Fallback: generate sample news if empty
+        if not all_news:
+            stock_name = IDX_STOCKS.get(symbol, symbol)
+            all_news = [
+                {
+                    'title': f'{stock_name} ({symbol}) - Data berita tidak tersedia dari sumber eksternal',
+                    'link': f'https://finance.yahoo.com/quote/{symbol}.JK',
+                    'summary': f'Berita untuk {stock_name} belum tersedia. Silakan kunjungi Yahoo Finance untuk berita terbaru.',
+                    'published': '',
+                    'source': 'system',
+                    'sentiment': {'polarity': 0, 'subjectivity': 0, 'label': 'Neutral'},
+                    'relevance': 1.0,
+                },
+                {
+                    'title': f'Analisa {stock_name} - kunjungi marketplace saham untuk berita terkini',
+                    'link': f'https://www.google.com/search?q={symbol}+saham+berita',
+                    'summary': f'Untuk berita terbaru tentang {stock_name}, silakan kunjungi portal berita keuangan.',
+                    'published': '',
+                    'source': 'system',
+                    'sentiment': {'polarity': 0, 'subjectivity': 0, 'label': 'Neutral'},
+                    'relevance': 0.5,
+                },
+            ]
 
         all_news.sort(key=lambda x: x.get('relevance', 0), reverse=True)
         return all_news[:max_items]
