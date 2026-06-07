@@ -315,20 +315,20 @@ st.markdown('<div class="sub-header">Analisa Saham Indonesia - Real-time, Techni
 
 # --- STOCK SELECTOR (MAIN AREA) ---
 stock_list = list(IDX_STOCKS.keys())
-col_search, col_select = st.columns([1, 2])
+
+col_search, col_select = st.columns([1, 3])
 
 with col_search:
     search_query = st.text_input("🔍 Cari Saham", placeholder="Ketik nama/simbol...", key="main_search")
 
-with col_select:
-    if search_query:
-        filtered = [s for s in stock_list if search_query.upper() in s or search_query.upper() in IDX_STOCKS[s].upper()]
-        if filtered:
-            selected_stock = st.selectbox("📋 Pilih Saham", filtered, format_func=lambda x: f"{x} - {IDX_STOCKS[x]}", key="main_stock_select")
-        else:
-            selected_stock = st.selectbox("📋 Pilih Saham", stock_list, format_func=lambda x: f"{x} - {IDX_STOCKS[x]}", key="main_stock_select")
-    else:
-        selected_stock = st.selectbox("📋 Pilih Saham", stock_list, format_func=lambda x: f"{x} - {IDX_STOCKS[x]}", key="main_stock_select")
+if search_query:
+    filtered = [s for s in stock_list if search_query.upper() in s or search_query.upper() in IDX_STOCKS.get(s, '').upper()]
+    options = filtered if filtered else stock_list[:20]
+    if not filtered:
+        st.warning("Saham tidak ditemukan, menampilkan daftar populer")
+    selected_stock = st.selectbox("📋 Pilih Saham", options, format_func=lambda x: f"{x} - {IDX_STOCKS.get(x, '')}", key="main_stock_select")
+else:
+    selected_stock = st.selectbox("📋 Pilih Saham", stock_list, format_func=lambda x: f"{x} - {IDX_STOCKS.get(x, '')}", key="main_stock_select")
 
 st.markdown("---")
 
@@ -380,53 +380,34 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
 
 # --- TAB 1: BERANDA ---
 with tab1:
-    if selected_stock:
-        col1, col2 = st.columns([3, 1])
+    st.markdown(f'<div class="section-header">📊 {IDX_STOCKS.get(selected_stock, selected_stock)} ({selected_stock})</div>', unsafe_allow_html=True)
+    
+    try:
+        with st.spinner(f"Memuat data {selected_stock}..."):
+            quote = fetcher.get_realtime_quote(selected_stock)
+            df = fetcher.get_stock_data(selected_stock, '6mo')
         
-        with col1:
-            with st.spinner(f"Memuat data {selected_stock}..."):
-                quote = fetcher.get_realtime_quote(selected_stock)
-                df = fetcher.get_stock_data(selected_stock, '6mo')
+        if quote:
+            col_a, col_b, col_c, col_d = st.columns(4)
+            with col_a:
+                st.metric("💰 Harga", f"Rp {quote['price']:,.0f}", f"{quote['change']:+,.0f} ({quote['change_percent']:+.2f}%)")
+            with col_b:
+                st.metric("📦 Volume", f"{quote['volume']:,}")
+            with col_c:
+                st.metric("🏦 Market Cap", f"Rp {quote['market_cap']/1e9:,.0f}B" if quote['market_cap'] else "N/A")
+            with col_d:
+                st.metric("📊 PE Ratio", f"{quote['pe_ratio']:.1f}" if quote['pe_ratio'] else "N/A")
             
-            if quote:
-                st.markdown(f'<div class="section-header">📊 {quote["name"]} ({selected_stock})</div>', unsafe_allow_html=True)
-                
-                col_a, col_b, col_c, col_d = st.columns(4)
-                with col_a:
-                    st.metric("💰 Harga", f"Rp {quote['price']:,.0f}", f"{quote['change']:+,.0f} ({quote['change_percent']:+.2f}%)")
-                with col_b:
-                    st.metric("📦 Volume", f"{quote['volume']:,}")
-                with col_c:
-                    st.metric("🏦 Market Cap", f"Rp {quote['market_cap']/1e9:,.0f}B" if quote['market_cap'] else "N/A")
-                with col_d:
-                    st.metric("📊 PE Ratio", f"{quote['pe_ratio']:.1f}" if quote['pe_ratio'] else "N/A")
-                
-                if not df.empty:
-                    analyzer = TechnicalAnalyzer(df)
-                    fig = analyzer.create_candlestick_chart(last_n_days=60)
-                    st.plotly_chart(fig, use_container_width=True, key="chart_beranda")
-        
-        with col2:
-            st.markdown("""
-            <div class="glass-card">
-                <h3 style="color: white; margin-top: 0;">⚡ Quick Stats</h3>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if quote:
-                stats = {
-                    "52W High": f"Rp {quote['high_52w']:,.0f}" if quote['high_52w'] else "N/A",
-                    "52W Low": f"Rp {quote['low_52w']:,.0f}" if quote['low_52w'] else "N/A",
-                    "PB Ratio": f"{quote['pb_ratio']:.2f}" if quote['pb_ratio'] else "N/A",
-                    "Div Yield": f"{quote['dividend_yield']*100:.2f}%" if quote['dividend_yield'] else "N/A",
-                }
-                for k, v in stats.items():
-                    st.markdown(f"""
-                    <div class="glass-card" style="margin-bottom: 0.5rem;">
-                        <div style="color: #a0a0a0; font-size: 0.85rem;">{k}</div>
-                        <div style="color: #ffffff; font-size: 1.1rem; font-weight: 600;">{v}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+            if not df.empty:
+                analyzer = TechnicalAnalyzer(df)
+                fig = analyzer.create_candlestick_chart(last_n_days=60)
+                st.plotly_chart(fig, use_container_width=True, key="chart_beranda")
+            else:
+                st.warning("⚠️ Data chart tidak tersedia")
+        else:
+            st.error(f"❌ Tidak dapat mengambil data untuk {selected_stock}")
+    except Exception as e:
+        st.error(f"❌ Error: {str(e)}")
 
 # --- TAB 2: TEKNIKAL ---
 with tab2:
